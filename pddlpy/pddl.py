@@ -34,8 +34,19 @@ class Atom():
         return str(tuple(self.predicate))
 
     def ground(self, varvals):
-        g = [ varvals[v] if v in varvals else v for v in self.predicate ]
+        g = [varvals[v] if v in varvals else v for v in self.predicate]
         return tuple(g)
+
+
+class Predicate(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.variables: dict = {}
+
+    def add_variable(self, name, var_type):
+        self.variables[name] = var_type
+
 
 class Scope():
     def __init__(self):
@@ -52,6 +63,7 @@ class Scope():
 class Obj():
     def __init__(self):
         self.variable_list = {}
+
 
 class Operator():
     """Represents and action. Can be grounded or ungrounded.
@@ -70,6 +82,7 @@ class Operator():
         effect_pos -- a set of atoms to add.
         effect_neg -- a set of atoms to delete.
     """
+
     def __init__(self, name):
         self.operator_name = name
         self.variable_list = {}
@@ -77,6 +90,25 @@ class Operator():
         self.precondition_neg = set()
         self.effect_pos = set()
         self.effect_neg = set()
+
+    def __eq__(self, other):
+        if not isinstance(other, Operator):
+            return False
+        if self.operator_name == other.operator_name and \
+                self.variable_list == other.variable_list:
+            return True
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        key = (self.operator_name,) + tuple(self.variable_list)
+        return hash(key)
+
+    def __repr__(self):
+        return f"{self.operator_name}({list(self.variable_list.values())})"
 
 
 class DomainListener(pddlListener):
@@ -86,6 +118,7 @@ class DomainListener(pddlListener):
         self.operators = {}
         self.scopes = []
         self.negativescopes = []
+        self.predicates = []
 
     def enterActionDef(self, ctx):
         opname = ctx.actionSymbol().getText()
@@ -98,6 +131,19 @@ class DomainListener(pddlListener):
 
     def enterPredicatesDef(self, ctx):
         self.scopes.append(Operator(None))
+        list_of_predicates = ctx.atomicFormulaSkeleton()
+        for predicate_ctx in list_of_predicates:
+            name = predicate_ctx.predicate().getText()
+            pred = Predicate(name)
+            var_list_ctx = predicate_ctx.typedVariableList()
+            for v in var_list_ctx.VARIABLE():
+                vname = v.getText()
+            for vs in var_list_ctx.singleTypeVarList():
+                t = vs.r_type().getText()
+                for v in vs.VARIABLE():
+                    vname = v.getText()
+                    pred.add_variable(vname, t)
+            self.predicates.append(pred)
 
     def exitPredicatesDef(self, ctx):
         dummyop = self.scopes.pop()
@@ -140,16 +186,16 @@ class DomainListener(pddlListener):
 
     def exitPrecondition(self, ctx):
         scope = self.scopes.pop()
-        self.scopes[-1].precondition_pos = set( scope.atoms )
-        self.scopes[-1].precondition_neg = set( scope.negatoms )
+        self.scopes[-1].precondition_pos = set(scope.atoms)
+        self.scopes[-1].precondition_neg = set(scope.negatoms)
 
     def enterEffect(self, ctx):
         self.scopes.append(Scope())
 
     def exitEffect(self, ctx):
         scope = self.scopes.pop()
-        self.scopes[-1].effect_pos = set( scope.atoms )
-        self.scopes[-1].effect_neg = set( scope.negatoms )
+        self.scopes[-1].effect_pos = set(scope.atoms)
+        self.scopes[-1].effect_neg = set(scope.negatoms)
 
     def enterGoalDesc(self, ctx):
         negscope = bool(self.negativescopes and self.negativescopes[-1])
@@ -199,8 +245,8 @@ class DomainListener(pddlListener):
                 for a in alls:
                     for s in a.predicate:
                         if s[0] != '?':
-                            vs.add( (s, None) )
-            self.objects = dict( vs)
+                            vs.add((s, None))
+            self.objects = dict(vs)
 
 
 class ProblemListener(pddlListener):
@@ -215,13 +261,13 @@ class ProblemListener(pddlListener):
         self.scopes.append(Scope())
 
     def exitInit(self, ctx):
-        self.initialstate = set( self.scopes.pop().atoms )
+        self.initialstate = set(self.scopes.pop().atoms)
 
     def enterGoal(self, ctx):
         self.scopes.append(Scope())
 
     def exitGoal(self, ctx):
-        self.goals = set( self.scopes.pop().atoms )
+        self.goals = set(self.scopes.pop().atoms)
 
     def enterAtomicNameFormula(self, ctx):
         pred = []
@@ -266,11 +312,11 @@ class ProblemListener(pddlListener):
             vs = set()
             for a in self.initialstate:
                 for s in a.predicate:
-                    vs.add( (s, None) )
+                    vs.add((s, None))
             for a in self.goals:
                 for s in a.predicate:
-                    vs.add( (s, None) )
-            self.objects = dict( vs )
+                    vs.add((s, None))
+            self.objects = dict(vs)
 
 
 class DomainProblem():
@@ -316,25 +362,27 @@ class DomainProblem():
         returns -- An iterator of Operator instances.
         """
         op = self.domain.operators[op_name]
-        for ground in self._instantiate( op.variable_list.items() ):
+        for ground in self._instantiate(op.variable_list.items()):
             st = dict(ground)
             gop = Operator(op_name)
             gop.variable_list = st
-            gop.precondition_pos = set( [ a.ground( st ) for a in op.precondition_pos ] )
-            gop.precondition_neg = set( [ a.ground( st ) for a in op.precondition_neg ] )
-            gop.effect_pos = set( [ a.ground( st ) for a in op.effect_pos ] )
-            gop.effect_neg = set( [ a.ground( st ) for a in op.effect_neg ] )
+            gop.precondition_pos = set(
+                [a.ground(st) for a in op.precondition_pos])
+            gop.precondition_neg = set(
+                [a.ground(st) for a in op.precondition_neg])
+            gop.effect_pos = set([a.ground(st) for a in op.effect_pos])
+            gop.effect_neg = set([a.ground(st) for a in op.effect_neg])
             yield gop
 
     def _typesymbols(self, t):
-        return ( k for k,v in self.worldobjects().items() if v == t )
+        return (k for k, v in self.worldobjects().items() if v == t)
 
     def _instantiate(self, variables):
         if not self.vargroundspace:
             for vname, t in variables:
                 c = []
                 for symb in self._typesymbols(t):
-                    c.append((vname, symb) )
+                    c.append((vname, symb))
                 self.vargroundspace.append(c)
         return itertools.product(*self.vargroundspace)
 
@@ -354,10 +402,8 @@ class DomainProblem():
         """Returns a dictionary of key value pairs where the key is the name of
         an object and the value is it's type (None in case is untyped.)
         """
-        return dict( self.domain.objects.items() | self.problem.objects.items() )
-
+        return dict(self.domain.objects.items() | self.problem.objects.items())
 
 
 if __name__ == '__main__':
     pass
-
