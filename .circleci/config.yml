@@ -23,4 +23,4 @@ jobs:
           command: |
             . venv/bin/activate
             flake8 --exclude=venv*,pddlpy --statistics
-            pytest -v --cov=planning_graph
+            pytest -v --cov=planning_sat

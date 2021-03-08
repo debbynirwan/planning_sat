@@ -83,9 +83,11 @@ class Operator():
         effect_neg -- a set of atoms to delete.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, var_list=None):
+        if var_list is None:
+            var_list = {}
         self.operator_name = name
-        self.variable_list = {}
+        self.variable_list = var_list
         self.precondition_pos = set()
         self.precondition_neg = set()
         self.effect_pos = set()

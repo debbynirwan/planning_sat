@@ -1,7 +1,8 @@
 """Encoder
 
 Description:
-    This module encodes Planning Problem to Propositional Formulas
+    This module runs DPLL (Davis–Putnam–Logemann–Loveland) Algorithm
+    to solve satisfiability problem
 
 License:
     Copyright 2021 Debby Nirwan
@@ -22,12 +23,13 @@ from planning_sat.encoder import PlanningProblemEncoder, Operator, Clause
 from typing import List, Set
 import copy
 import pddlpy
+import time
+import argparse
+import os
+import sys
 
 
-class DavisPutnam(object):
-
-    def __init__(self):
-        pass
+class DPLL(object):
 
     def __call__(self, formulas: List[Clause], model=None):
 
@@ -49,7 +51,6 @@ class DavisPutnam(object):
                                                              model,
                                                              positive_clause)
 
-            # left recursive call
             sat, new_model = self.__call__(new_formulas, new_model)
             if sat:
                 return sat, new_model
@@ -61,7 +62,6 @@ class DavisPutnam(object):
                                                              model,
                                                              negative_clause)
 
-            # right recursive call
             sat, new_model = self.__call__(new_formulas, new_model)
             if sat:
                 return sat, new_model
@@ -122,7 +122,6 @@ class DavisPutnam(object):
                     if literals:
                         for literal in literals:
                             new_clause.add(literal, Operator.OR)
-                    # new_formulas.insert(0, new_clause)
                     new_formulas.append(new_clause)
                     break
 
@@ -162,47 +161,74 @@ class DavisPutnam(object):
         return pos_atom, neg_atom
 
 
+def setup_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Solving SAT Formulas using DPLL Algorithm",
+        allow_abbrev=False
+    )
+
+    parser.add_argument(
+        "-d", "--domain",
+        required=True,
+        type=str,
+        help="path to pddl domain file"
+    )
+
+    parser.add_argument(
+        "-p", "--problem",
+        required=True,
+        type=str,
+        help="path to pddl problem file"
+    )
+
+    parser.add_argument(
+        "-l", "--length",
+        required=True,
+        type=int,
+        default=1,
+        help="specify the length of steps in formulas encoding"
+    )
+
+    parser.add_argument(
+        "-f", "--print",
+        action='store_true',
+        help="print the result"
+    )
+
+    return parser
+
+
 if __name__ == "__main__":
-    length = 1
-    pp_encoder = PlanningProblemEncoder(
-        "../domain/simple-domain.pddl",
-        "../domain/simple-problem.pddl",
-        length=length)
 
-    # todo: move the following block to unit test
-    '''forms = []
-    clause_1 = Clause(('D',))
-    forms.append(clause_1)
-    clause_2 = Clause(('not', 'D'))
-    clause_2.add(('A',), Operator.OR)
-    clause_2.add(('not', 'B'), Operator.OR)
-    forms.append(clause_2)
-    clause_3 = Clause(('not', 'D'))
-    clause_3.add(('not', 'A'), Operator.OR)
-    clause_3.add(('not', 'B'), Operator.OR)
-    forms.append(clause_3)
-    clause_4 = Clause(('not', 'D'))
-    clause_4.add(('not', 'A'), Operator.OR)
-    clause_4.add(('B',), Operator.OR)
-    forms.append(clause_4)
-    clause_5 = Clause(('D',))
-    clause_5.add(('A',), Operator.OR)
-    forms.append(clause_5)
-    
-    davis_putnam = DavisPutnam()
-    result_dp, final_model = davis_putnam(forms)
-    '''
+    args = setup_parser().parse_args()
+    if not os.path.isfile(args.domain) or not os.path.isfile(args.problem):
+        sys.exit(1)
 
-    davis_putnam = DavisPutnam()
-    result_dp, final_model = davis_putnam(pp_encoder.propositional_formulas)
-    if result_dp:
-        print("Plan:")
-        operator_list = []
-        for item in final_model:
-            if 'not' not in item and isinstance(item[0], pddlpy.Operator):
-                operator_list.append(item)
-        operator_list.sort(key=lambda tup: tup[-1])
-        for op in operator_list:
-            print(op)
-    else:
-        print(f"Failed to plan at length {length}")
+    domain_file = args.domain
+    problem_file = args.problem
+    length = args.length
+    print_debug = args.print
+
+    pp_encoder = PlanningProblemEncoder(domain_file, problem_file, length)
+
+    dpll = DPLL()
+
+    if print_debug:
+        print(f"DPLL algorithm running with "
+              f"{len(pp_encoder.propositional_formulas)} formulas")
+    start_time = time.perf_counter()
+    result_dp, final_model = dpll(pp_encoder.propositional_formulas)
+    end_time = time.perf_counter()
+    if print_debug:
+        print(f"DPLL algorithm ran for {end_time-start_time:0.4f} seconds")
+        if result_dp:
+            print("Plan:")
+            operator_list = []
+            for item in final_model:
+                if 'not' not in item and isinstance(item[0], pddlpy.Operator):
+                    operator_list.append(item)
+            operator_list.sort(key=lambda tup: tup[-1])
+            for op in operator_list:
+                print(op)
+        else:
+            print(f"Failed to plan at length {length}")

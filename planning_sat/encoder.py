@@ -19,11 +19,9 @@ License:
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-from pddl_adapter import PlanningProblem
+from .pddl_adapter import PlanningProblem
 from enum import Enum
 from itertools import combinations
-from typing import List
-import pddlpy
 
 
 class Operator(Enum):
@@ -71,6 +69,8 @@ class Clause(object):
             self._clause.append(operator)
         self._clause.append(fluent)
 
+        return self
+
     @property
     def clause(self):
         return self._clause
@@ -108,14 +108,6 @@ class PlanningProblemEncoder(object):
         goal_state = list(self._problem.goal_state)
         goal_state_clauses = []
         for goal in goal_state:
-            '''related_fluents = [f for f in fluents if
-                               f[0] == goal[0] and f[1] == goal[1]]
-            for item in related_fluents:
-                if item == goal:
-                    goal_state_clauses.append(Clause(item + (self._length,)))
-                else:
-                    goal_state_clauses.append(Clause(('not',) + item +
-                                                     (self._length,)))'''
             goal_state_clauses.append(Clause(goal + (str(self._length),)))
 
         enc_actions_clauses = []
@@ -179,27 +171,6 @@ class PlanningProblemEncoder(object):
                         clause_neg.add(c_neg, Operator.OR)
                     explanatory_frame_axioms.append(clause_neg)
 
-            '''for act in actions:
-                if act.effect_pos.issubset(act.precondition_pos):
-                    continue
-                for fluent in fluents:
-                    if fluent in act.effect_pos:
-                        a_pos = fluent + (str(step),)
-                        b_pos = ('not',) + fluent + (str(step + 1),)
-                        c_pos = (act, str(step))
-                        clause_pos = Clause(a_pos)
-                        clause_pos.add(b_pos, Operator.OR)
-                        clause_pos.add(c_pos, Operator.OR)
-                        explanatory_frame_axioms.append(clause_pos)
-                    if fluent in act.effect_neg:
-                        a_neg = ('not',) + fluent + (str(step),)
-                        b_neg = fluent + (str(step + 1),)
-                        c_neg = (act, str(step))
-                        clause_neg = Clause(a_neg)
-                        clause_neg.add(b_neg, Operator.OR)
-                        clause_neg.add(c_neg, Operator.OR)
-                        explanatory_frame_axioms.append(clause_neg)'''
-
             # 5. complete exclusion axiom
             for action_pair in combinations(actions, 2):
                 if action_pair[0].effect_pos.issubset(
@@ -219,10 +190,6 @@ class PlanningProblemEncoder(object):
             complete_exclusion_axiom
 
         return proposition_formulas
-
-    def actions_with_pos_effect(self, all_actions: List[pddlpy.Operator],
-                                effect: tuple):
-        pass
 
     @property
     def propositional_formulas(self):
