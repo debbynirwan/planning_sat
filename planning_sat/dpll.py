@@ -91,7 +91,6 @@ class DPLL(object):
 
         new_formulas = copy.deepcopy(formulas)
         model = model.union(unit_clause)
-        # new_formulas.remove(unit_clause)
 
         if not new_formulas:
             return model, new_formulas
