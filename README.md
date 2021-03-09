@@ -51,8 +51,7 @@ satisfiable, model = dpll(encoder.propositional_formulas)
 
 ## pddlpy
 pddlpy included in this repo is the work of Hernán M. Foffani, it is copied from [here.](https://github.com/hfoffani/pddl-lib)
-It is copied because it won't work when installed as a package due to the wrong version of the
-antlr4 package. There are no changes made to it.
+
 
 ## Issues
 Please report issues if you found bugs or raise a Pull Request.
