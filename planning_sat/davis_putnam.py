@@ -29,7 +29,7 @@ import os
 import sys
 
 
-class DPLL(object):
+class DavisPutnam(object):
 
     def __call__(self, formulas: List[Clause], model=None):
 
@@ -210,16 +210,16 @@ if __name__ == "__main__":
 
     pp_encoder = PlanningProblemEncoder(domain_file, problem_file, length)
 
-    dpll = DPLL()
+    davis_putnam = DavisPutnam()
 
     if print_debug:
-        print(f"DPLL algorithm running with "
+        print(f"Davis-Putnam algorithm running with "
               f"{len(pp_encoder.propositional_formulas)} formulas")
     start_time = time.perf_counter()
-    result_dp, final_model = dpll(pp_encoder.propositional_formulas)
+    result_dp, final_model = davis_putnam(pp_encoder.propositional_formulas)
     end_time = time.perf_counter()
     if print_debug:
-        print(f"DPLL algorithm ran for {end_time-start_time:0.4f} seconds")
+        print(f"Davis-Putnam algorithm ran for {end_time-start_time:0.4f} s")
         if result_dp:
             print("Plan:")
             operator_list = []

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="planning_sat",
-    version="0.0.1",
+    version="0.0.2",
     author="Debby Nirwan",
     author_email="debby_nirwan@yahoo.com",
     description="AI Planning as Satisfiability",

@@ -1,4 +1,4 @@
-from planning_sat.dpll import DPLL
+from planning_sat.davis_putnam import DavisPutnam
 from planning_sat.encoder import Clause, Operator
 
 
@@ -27,8 +27,8 @@ class TestDPLL:
         clause_5.add(('A',), Operator.OR)
         forms.append(clause_5)
 
-        dpll = DPLL()
-        result_dp, final_model = dpll(forms)
+        davis_putnam = DavisPutnam()
+        result_dp, final_model = davis_putnam(forms)
 
         assert result_dp
         assert final_model == model

@@ -2,8 +2,8 @@
 AI Planning as Satisfiability
 
 ## About
-This library implements Planning as Satisfiability that can be used to  solve STRIPS-like AI Planning Problems using PDDL.
-When passed the domain and problem representations in PDDL, the library returns Solution Plan if any.
+This library implements Planning as Satisfiability that can be used to solve STRIPS-like AI Planning Problems using PDDL.
+When passed the domain and problem representations in PDDL, the library returns Satisfiability and the model if it is satisfiable and None otherwise.
 
 ## Documentation
 If you are interested in understanding the details, please read my post
@@ -30,7 +30,7 @@ You can execute the script directly by passing it the required arguments which a
 
 example:
 ```commandline
-python3 dpll.py -d domain/simple-domain.pddl -p domain/simple-problem.pddl -l 1 -f
+python3 davis_putnam.py -d domain/simple-domain.pddl -p domain/simple-problem.pddl -l 1 -f
 ```
 
 ### Including the library in your project
@@ -38,15 +38,16 @@ If you want to include the library in your project, you can install it with pip.
 The steps are simple:
 * Create an encoder object which will encode the Planning Problem to a boolean (propositional) formula in CNF (Conjunctive Normal Form)
 * Create a DPLL object which will run **Davis–Putnam–Logemann–Loveland** algorithm over the encoded problem to determine whether it is *satisfiable* or not
+
 ```python
 import planning_sat.encoder as encoder
-from planning_sat.dpll import DPLL
+from planning_sat.davis_putnam import DavisPutnam
 
 domain_file = "domain/simple-domain.pddl"
 problem_file = "domain/simple-problem.pddl"
 encoder = encoder.PlanningProblemEncoder(domain_file, problem_file, length=1)
-dpll = DPLL()
-satisfiable, model = dpll(encoder.propositional_formulas)
+davis_putnam = DavisPutnam()
+satisfiable, model = davis_putnam(encoder.propositional_formulas)
 ```
 
 ## pddlpy
