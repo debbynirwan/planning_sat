@@ -7,7 +7,7 @@ When passed the domain and problem representations in PDDL, the library returns 
 
 ## Documentation
 If you are interested in understanding the details, please read my post
-at [TBD](https://google.com)
+at [here](https://towardsdatascience.com/ai-planning-as-satisfiability-with-davis-putnam-algorithm-53f05d2f2825)
 
 ## Installation
 ```commandline
